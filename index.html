@@ -4,12 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Feuille de Temps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: Arial, sans-serif;
-      background: #e2e8f0;
+      font-family: 'Inter', Arial, sans-serif;
+      background: #111827;
       font-size: 13px;
     }
 
@@ -17,54 +20,74 @@
     #toolbar {
       position: fixed;
       top: 0; left: 0; right: 0;
-      height: 52px;
-      background: #1e293b;
+      height: 50px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
       display: flex;
       align-items: center;
-      padding: 0 20px;
-      gap: 8px;
+      padding: 0 24px;
+      gap: 6px;
       z-index: 1000;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
     }
 
-    #toolbar .title {
-      color: #f1f5f9;
-      font-size: 15px;
+    .t-brand {
+      font-size: 11px;
       font-weight: 600;
-      margin-right: 8px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: #475569;
+      margin-right: 14px;
       white-space: nowrap;
     }
 
-    .divider { width: 1px; height: 26px; background: #475569; margin: 0 4px; }
+    .t-sep { width: 1px; height: 20px; background: #1e293b; margin: 0 6px; }
 
     .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 5px;
-      padding: 7px 14px;
+      height: 32px;
+      padding: 0 15px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
-      transition: filter 0.15s, transform 0.1s;
+      font-family: 'Inter', Arial, sans-serif;
+      letter-spacing: 0.3px;
       white-space: nowrap;
-      font-family: inherit;
+      transition: filter 0.15s, transform 0.1s;
     }
-    .btn:hover  { filter: brightness(1.15); }
-    .btn:active { transform: scale(0.97); }
+    .btn:hover  { filter: brightness(1.14); }
+    .btn:active { transform: scale(0.96); }
 
     .btn-add  { background: #3b82f6; color: #fff; }
     .btn-pdf  { background: #ef4444; color: #fff; }
     .btn-docx { background: #16a34a; color: #fff; }
-    .btn-new  { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
+    .btn-new  { background: transparent; color: #475569; border: 1px solid #1e293b; }
+    .btn-new:hover { color: #64748b; border-color: #334155; filter: none; }
+
+    .t-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+    #save-status {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      color: #1e293b;
+      transition: color 0.4s;
+      white-space: nowrap;
+    }
+    #save-status.on { color: #22c55e; }
 
     /* ── DOC WRAPPER ── */
     #doc-wrapper {
-      margin-top: 68px;
-      padding: 20px 20px 40px;
+      margin-top: 50px;
+      min-height: calc(100vh - 50px);
+      padding: 40px 20px 60px;
       display: flex;
       justify-content: center;
+      align-items: flex-start;
     }
 
     /* ── DOCUMENT A4 ── */
@@ -72,170 +95,215 @@
       width: 210mm;
       min-height: 297mm;
       background: #fff;
-      padding: 20mm 20mm 18mm 20mm;
-      box-shadow: 0 6px 30px rgba(0,0,0,0.18);
+      padding: 20mm 22mm 20mm 22mm;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.04),
+        0 4px 8px rgba(0,0,0,0.08),
+        0 24px 64px rgba(0,0,0,0.24);
     }
 
     /* ── HEADER ── */
-    .header-section { margin-bottom: 12px; }
+    .header-section {
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
 
     .header-row {
       display: flex;
       flex-wrap: wrap;
       align-items: baseline;
-      gap: 3px 8px;
-      margin-bottom: 5px;
-      font-size: 11.5pt;
-      font-weight: bold;
+      gap: 2px 6px;
+      margin-bottom: 6px;
+      font-size: 11pt;
+      font-weight: 600;
     }
+    .header-row:last-child { margin-bottom: 0; }
 
-    .lbl { white-space: nowrap; }
+    .lbl { white-space: nowrap; color: #1e293b; }
 
     .field {
       border: none;
-      border-bottom: 1.5px solid #cbd5e1;
       outline: none;
       font-family: inherit;
-      font-size: 11.5pt;
-      font-weight: bold;
-      padding: 1px 4px;
+      font-size: 11pt;
+      font-weight: 600;
+      color: #0f172a;
+      padding: 1px 3px;
       background: transparent;
+      border-bottom: 1.5px solid transparent;
       transition: border-color 0.2s;
       min-width: 60px;
     }
-    .field:focus       { border-bottom-color: #3b82f6; }
-    .field::placeholder { color: #94a3b8; font-weight: normal; }
+    .field:hover { border-bottom-color: #e2e8f0; }
+    .field:focus { border-bottom-color: #3b82f6; }
+    .field::placeholder { color: #d1d5db; font-weight: 400; font-style: italic; }
 
-    .f-nom   { flex: 1; min-width: 140px; }
-    .f-poste { flex: 1.5; min-width: 180px; }
-    .f-heures { width: 65px; }
-    .f-jours  { width: 85px; }
-    .f-mois   { width: 120px; }
+    .f-nom    { flex: 1;   min-width: 140px; }
+    .f-poste  { flex: 1.5; min-width: 180px; }
+    .f-heures { width: 60px; }
+    .f-jours  { width: 88px; }
+    .f-mois   { width: 126px; }
 
-    /* ── TABLE ── */
+    /* ── TABLE CONTAINER ── */
+    .table-wrap {
+      border: 1px solid #c8d0db;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
     #task-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 10.5pt;
-      margin-bottom: 4px;
     }
 
     #task-table thead th {
-      border: 1px solid #1e293b;
-      padding: 6px 10px;
+      padding: 9px 12px;
       text-align: left;
-      font-weight: bold;
-      background: #f8fafc;
+      background: #f1f5f9;
+      font-weight: 600;
+      font-size: 9pt;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #475569;
+      border-bottom: 2px solid #334155;
     }
+    #task-table thead th:first-child { width: 112px; border-right: 1px solid #c8d0db; }
+    #task-table thead th:last-child  { width: 36px; background: transparent; border-bottom-color: transparent; }
 
-    #task-table thead th:first-child { width: 105px; }
-    #task-table thead th:last-child  { width: 32px; border: none; background: transparent; }
+    .task-row td {
+      border-bottom: 1px solid #edf0f4;
+      padding: 0;
+      vertical-align: top;
+    }
+    .task-row td:first-child { border-right: 1px solid #edf0f4; }
+    .task-row td:last-child  { border: none; border-bottom: 1px solid #edf0f4; width: 36px; vertical-align: middle; text-align: center; padding: 0 4px; }
+    .task-row:last-child td  { border-bottom: none; }
+    .task-row:last-child td:last-child { border-bottom: none; }
 
-    .task-row td             { border: 1px solid #94a3b8; padding: 0; vertical-align: top; }
-    .task-row td:last-child  { border: none; width: 32px; vertical-align: middle; text-align: center; padding: 4px; }
+    .task-row { transition: background 0.1s; }
+    .task-row:hover { background: #f8fafc; }
 
     .date-input {
       width: 100%;
       border: none;
       outline: none;
-      padding: 5px 9px;
+      padding: 7px 12px;
       font-family: inherit;
       font-size: 10.5pt;
       background: transparent;
+      color: #1e293b;
     }
 
     .desc-cell {
-      min-height: 30px;
-      padding: 5px 9px;
+      min-height: 34px;
+      padding: 7px 12px;
       outline: none;
       font-family: inherit;
       font-size: 10.5pt;
-      line-height: 1.45;
+      line-height: 1.55;
       white-space: pre-wrap;
       word-break: break-word;
+      color: #1e293b;
     }
     .desc-cell:empty::before {
       content: attr(data-ph);
-      color: #94a3b8;
+      color: #d1d5db;
       pointer-events: none;
+      font-style: italic;
     }
 
     .del-btn {
       background: none;
       border: none;
-      color: #cbd5e1;
-      font-size: 18px;
+      color: #94a3b8;
+      font-size: 17px;
       cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 3px;
-      line-height: 1;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: inherit;
-      transition: color 0.15s, background 0.15s;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
     }
-    .del-btn:hover { color: #ef4444; background: #fee2e2; }
+    .task-row:hover .del-btn { opacity: 1; }
+    .del-btn:hover { color: #ef4444; background: #fff1f2; }
 
     /* ── ADD ROW ── */
-    #add-row-wrap { margin-bottom: 28px; }
-
     #add-row-btn {
+      display: block;
       width: 100%;
-      padding: 7px;
-      border: 2px dashed #cbd5e1;
-      border-radius: 4px;
+      padding: 9px;
+      border: none;
+      border-top: 1px solid #edf0f4;
       background: none;
       cursor: pointer;
       color: #94a3b8;
-      font-size: 12px;
-      font-family: inherit;
-      transition: all 0.2s;
+      font-size: 11.5px;
+      font-family: 'Inter', Arial, sans-serif;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      text-align: center;
+      transition: color 0.2s, background 0.2s;
     }
-    #add-row-btn:hover {
-      border-color: #3b82f6;
-      color: #3b82f6;
-      background: #eff6ff;
-    }
+    #add-row-btn:hover { color: #3b82f6; background: #f0f7ff; }
 
     /* ── SIGNATURES ── */
     .sig-section {
       display: flex;
       justify-content: space-between;
-      margin-top: 24px;
+      margin-top: 36px;
       font-size: 10.5pt;
     }
 
-    .sig-block { width: 42%; }
+    .sig-block { width: 40%; }
 
     .sig-title {
-      font-weight: bold;
-      margin-bottom: 38px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 48px;
+      font-size: 10.5pt;
+    }
+
+    .sig-line {
+      height: 1px;
+      background: #94a3b8;
+      margin-bottom: 7px;
     }
 
     .sig-name {
       border: none;
-      border-bottom: 1px solid #94a3b8;
       outline: none;
       font-family: inherit;
       font-size: 10.5pt;
+      font-weight: 500;
       width: 100%;
-      padding: 2px 3px;
+      padding: 2px 0;
       background: transparent;
-      transition: border-color 0.2s;
+      color: #1e293b;
     }
-    .sig-name:focus       { border-bottom-color: #3b82f6; }
-    .sig-name::placeholder { color: #94a3b8; }
+    .sig-name::placeholder { color: #d1d5db; font-weight: 400; font-style: italic; }
 
     /* ── NOTIFICATION ── */
     #notif {
       position: fixed;
-      bottom: 20px; right: 20px;
+      bottom: 24px; right: 24px;
       background: #1e293b;
       color: #f1f5f9;
-      padding: 10px 18px;
-      border-radius: 6px;
-      font-size: 13px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid #334155;
+      letter-spacing: 0.2px;
       opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.25s, transform 0.25s;
+      transform: translateY(6px);
+      transition: opacity 0.2s, transform 0.2s;
       pointer-events: none;
       z-index: 2000;
     }
@@ -243,18 +311,20 @@
 
     /* ── PRINT ── */
     @media print {
-      #toolbar, #add-row-wrap, .del-btn { display: none !important; }
+      #toolbar, .del-btn { display: none !important; }
 
-      body { background: #fff; }
+      body { background: #fff; font-family: Arial, sans-serif; }
 
-      #doc-wrapper { margin: 0; padding: 0; }
+      #doc-wrapper { margin: 0; padding: 0; min-height: auto; }
 
       #doc {
         width: 100%;
         box-shadow: none;
-        padding: 12mm 15mm;
+        padding: 10mm 16mm;
         min-height: auto;
       }
+
+      .header-section { border-bottom: 1px solid #ccc; }
 
       input {
         border: none !important;
@@ -263,12 +333,29 @@
         appearance: none;
       }
 
-      .sig-name { border-bottom: none !important; }
+      .table-wrap { border: 1px solid #bbb; }
 
-      .desc-cell:empty::before { content: ''; }
+      #task-table thead th {
+        border-bottom: 2px solid #333;
+        background: #f5f5f5;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      #task-table thead th:first-child { border-right: 1px solid #bbb; }
+
+      .task-row td         { border-bottom: 1px solid #ddd; }
+      .task-row td:first-child { border-right: 1px solid #ddd; }
+      .task-row:hover      { background: transparent; }
+      .task-row:last-child td { border-bottom: none; }
 
       .task-row td:last-child              { display: none !important; }
       #task-table thead th:last-child      { display: none !important; }
+
+      #add-row-btn { display: none !important; }
+
+      .desc-cell:empty::before { content: ''; }
+
+      .sig-name { border-bottom: none !important; }
 
       @page { size: A4 portrait; margin: 14mm 18mm; }
     }
@@ -278,13 +365,16 @@
 
 <!-- TOOLBAR -->
 <div id="toolbar">
-  <span class="title">Feuille de Temps</span>
-  <div class="divider"></div>
+  <span class="t-brand">Feuille de Temps</span>
+  <div class="t-sep"></div>
   <button class="btn btn-add"  onclick="addRow()">+ Ajouter une ligne</button>
   <button class="btn btn-pdf"  onclick="exportPDF()">⬇ PDF</button>
   <button class="btn btn-docx" onclick="exportDOCX()">⬇ DOCX</button>
-  <div class="divider"></div>
-  <button class="btn btn-new"  onclick="newDoc()">Nouveau</button>
+  <div class="t-right">
+    <span id="save-status"></span>
+    <div class="t-sep"></div>
+    <button class="btn btn-new" onclick="newDoc()">Nouveau</button>
+  </div>
 </div>
 
 <div id="notif"></div>
@@ -297,34 +387,32 @@
     <div class="header-row">
       <span class="lbl">Nom :</span>
       <input type="text" id="f-nom"   class="field f-nom"   placeholder="Nom et prénom">
-      <span class="lbl" style="margin-left:14px">Poste :</span>
+      <span class="lbl" style="margin-left:16px">Poste :</span>
       <input type="text" id="f-poste" class="field f-poste" placeholder="Poste occupé">
     </div>
     <!-- En-tête ligne 2 : Heures / Jours / Mois -->
     <div class="header-row">
       <span class="lbl">Nbre d'heure/jour :</span>
       <input type="text" id="f-heures" class="field f-heures" placeholder="8H">
-      <span class="lbl" style="margin-left:14px">Nombre de jours de travail :</span>
+      <span class="lbl" style="margin-left:16px">Nombre de jours de travail :</span>
       <input type="text" id="f-jours"  class="field f-jours"  placeholder="22 jours">
-      <span class="lbl" style="margin-left:14px">Mois :</span>
+      <span class="lbl" style="margin-left:16px">Mois :</span>
       <input type="text" id="f-mois"   class="field f-mois"   placeholder="Novembre 2025">
     </div>
   </div>
 
   <!-- Tableau des tâches -->
-  <table id="task-table">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Description des tâches</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="task-body"></tbody>
-  </table>
-
-  <!-- Bouton ajout inline -->
-  <div id="add-row-wrap">
+  <div class="table-wrap">
+    <table id="task-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description des tâches</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="task-body"></tbody>
+    </table>
     <button id="add-row-btn" type="button" onclick="addRow()">+ Ajouter une ligne</button>
   </div>
 
@@ -332,10 +420,12 @@
   <div class="sig-section">
     <div class="sig-block">
       <div class="sig-title">Signature de l'ASS RAF</div>
+      <div class="sig-line"></div>
       <input type="text" class="sig-name" id="sig-l" placeholder="Nom du signataire">
     </div>
     <div class="sig-block" style="text-align:right">
       <div class="sig-title">Signature la superviseure</div>
+      <div class="sig-line"></div>
       <input type="text" class="sig-name" id="sig-r" placeholder="Nom du signataire">
     </div>
   </div>
@@ -351,7 +441,6 @@
 
 let saveTimer;
 
-// Auto-save sur chaque modification
 document.getElementById('doc').addEventListener('input', () => {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(persist, 800);
@@ -363,19 +452,21 @@ function addRow(date, desc) {
   desc = desc || '';
 
   const tbody = document.getElementById('task-body');
-  const tr    = document.createElement('tr');
+  const tr = document.createElement('tr');
   tr.className = 'task-row';
 
-  // Cellule date
-  const tdDate  = document.createElement('td');
-  const dateIn  = document.createElement('input');
+  const tdDate = document.createElement('td');
+  const dateIn = document.createElement('input');
   dateIn.type        = 'text';
   dateIn.className   = 'date-input';
   dateIn.placeholder = 'ex: 03 Novembre';
   dateIn.value       = date;
+  // Entrée dans le champ date → focus description
+  dateIn.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); descDiv.focus(); }
+  });
   tdDate.appendChild(dateIn);
 
-  // Cellule description
   const tdDesc  = document.createElement('td');
   const descDiv = document.createElement('div');
   descDiv.contentEditable = 'true';
@@ -384,7 +475,6 @@ function addRow(date, desc) {
   if (desc) descDiv.innerText = desc;
   tdDesc.appendChild(descDiv);
 
-  // Cellule supprimer
   const tdDel  = document.createElement('td');
   const delBtn = document.createElement('button');
   delBtn.className = 'del-btn';
@@ -433,14 +523,17 @@ function setData(d) {
   document.getElementById('sig-l').value    = d.sigL   || '';
   document.getElementById('sig-r').value    = d.sigR   || '';
   document.getElementById('task-body').innerHTML = '';
-  (d.rows || []).forEach(function(r) { addRow(r.date, r.desc); });
+  (d.rows || []).forEach(r => addRow(r.date, r.desc));
 }
 
 // ── PERSISTANCE ───────────────────────────────────────────────
 function persist() {
   try {
     localStorage.setItem('fdt', JSON.stringify(getData()));
-    notify('Sauvegardé ✓');
+    const el = document.getElementById('save-status');
+    el.textContent = 'Sauvegardé';
+    el.classList.add('on');
+    setTimeout(() => { el.textContent = ''; el.classList.remove('on'); }, 2000);
   } catch(e) {
     notify('Erreur de sauvegarde');
   }
@@ -466,25 +559,14 @@ async function exportDOCX() {
     return;
   }
 
-  var d = getData();
-  var _docx = window.docx;
-  var Document   = _docx.Document;
-  var Packer     = _docx.Packer;
-  var Paragraph  = _docx.Paragraph;
-  var Table      = _docx.Table;
-  var TableRow   = _docx.TableRow;
-  var TableCell  = _docx.TableCell;
-  var TextRun    = _docx.TextRun;
-  var WidthType  = _docx.WidthType;
+  const d = getData();
+  const { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType } = window.docx;
 
-  function boldPara(text) {
-    return new Paragraph({
-      children: [new TextRun({ text: text, bold: true, size: 22 })]
-    });
-  }
+  const boldPara = text => new Paragraph({
+    children: [new TextRun({ text, bold: true, size: 22 })]
+  });
 
-  // En-têtes
-  var header = [
+  const header = [
     boldPara('Nom : ' + d.nom + '     Poste : ' + d.poste),
     boldPara(
       'Nbre d\'heure/jour : ' + d.heures +
@@ -494,8 +576,7 @@ async function exportDOCX() {
     new Paragraph({ text: '' }),
   ];
 
-  // Tableau
-  var headerRow = new TableRow({
+  const headerRow = new TableRow({
     children: [
       new TableCell({
         width: { size: 20, type: WidthType.PERCENTAGE },
@@ -508,32 +589,27 @@ async function exportDOCX() {
     ]
   });
 
-  var dataRows = d.rows.map(function(r) {
-    return new TableRow({
-      children: [
-        new TableCell({
-          width: { size: 20, type: WidthType.PERCENTAGE },
-          children: [new Paragraph({ children: [new TextRun({ text: r.date, size: 21 })] })]
-        }),
-        new TableCell({
-          width: { size: 80, type: WidthType.PERCENTAGE },
-          children: r.desc
-            ? r.desc.split('\n').map(function(line) {
-                return new Paragraph({ children: [new TextRun({ text: line, size: 21 })] });
-              })
-            : [new Paragraph({ text: '' })]
-        }),
-      ]
-    });
-  });
+  const dataRows = d.rows.map(r => new TableRow({
+    children: [
+      new TableCell({
+        width: { size: 20, type: WidthType.PERCENTAGE },
+        children: [new Paragraph({ children: [new TextRun({ text: r.date, size: 21 })] })]
+      }),
+      new TableCell({
+        width: { size: 80, type: WidthType.PERCENTAGE },
+        children: r.desc
+          ? r.desc.split('\n').map(line => new Paragraph({ children: [new TextRun({ text: line, size: 21 })] }))
+          : [new Paragraph({ text: '' })]
+      }),
+    ]
+  }));
 
-  var taskTable = new Table({
+  const taskTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: [headerRow].concat(dataRows),
+    rows: [headerRow, ...dataRows],
   });
 
-  // Signatures
-  var sigTitle = new Paragraph({
+  const sigTitle = new Paragraph({
     children: [
       new TextRun({ text: 'Signature de l\'ASS RAF', bold: true, size: 21 }),
       new TextRun({ text: '\t\t\t\t\t', size: 21 }),
@@ -541,7 +617,7 @@ async function exportDOCX() {
     ]
   });
 
-  var sigNames = new Paragraph({
+  const sigNames = new Paragraph({
     children: [
       new TextRun({ text: d.sigL, size: 21 }),
       new TextRun({ text: '\t\t\t\t\t', size: 21 }),
@@ -549,12 +625,13 @@ async function exportDOCX() {
     ]
   });
 
-  var doc = new Document({
+  const doc = new Document({
     sections: [{
       properties: {
         page: { margin: { top: 1080, bottom: 1080, left: 1134, right: 1134 } }
       },
-      children: header.concat([
+      children: [
+        ...header,
         taskTable,
         new Paragraph({ text: '' }),
         new Paragraph({ text: '' }),
@@ -562,12 +639,12 @@ async function exportDOCX() {
         sigTitle,
         new Paragraph({ text: '' }),
         sigNames,
-      ])
+      ]
     }]
   });
 
   try {
-    var blob = await Packer.toBlob(doc);
+    const blob = await Packer.toBlob(doc);
     saveAs(blob, 'feuille-de-temps-' + (d.mois || 'export') + '.docx');
     notify('DOCX exporté ✓');
   } catch(err) {
@@ -577,18 +654,18 @@ async function exportDOCX() {
 }
 
 // ── NOTIFICATION ──────────────────────────────────────────────
-var notifTimer;
+let notifTimer;
 function notify(msg) {
-  var el = document.getElementById('notif');
+  const el = document.getElementById('notif');
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(notifTimer);
-  notifTimer = setTimeout(function() { el.classList.remove('show'); }, 2000);
+  notifTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', function() {
-  var saved = localStorage.getItem('fdt');
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('fdt');
   if (saved) {
     try { setData(JSON.parse(saved)); return; } catch(e) {}
   }
