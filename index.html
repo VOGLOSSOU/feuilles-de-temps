@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feuille de Temps</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #e2e8f0;
+      font-size: 13px;
+    }
+
+    /* ── TOOLBAR ── */
+    #toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 8px;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+
+    #toolbar .title {
+      color: #f1f5f9;
+      font-size: 15px;
+      font-weight: 600;
+      margin-right: 8px;
+      white-space: nowrap;
+    }
+
+    .divider { width: 1px; height: 26px; background: #475569; margin: 0 4px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: filter 0.15s, transform 0.1s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn:hover  { filter: brightness(1.15); }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-add  { background: #3b82f6; color: #fff; }
+    .btn-pdf  { background: #ef4444; color: #fff; }
+    .btn-docx { background: #16a34a; color: #fff; }
+    .btn-new  { background: #334155; color: #cbd5e1; border: 1px solid #475569; }
+
+    /* ── DOC WRAPPER ── */
+    #doc-wrapper {
+      margin-top: 68px;
+      padding: 20px 20px 40px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── DOCUMENT A4 ── */
+    #doc {
+      width: 210mm;
+      min-height: 297mm;
+      background: #fff;
+      padding: 20mm 20mm 18mm 20mm;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.18);
+    }
+
+    /* ── HEADER ── */
+    .header-section { margin-bottom: 12px; }
+
+    .header-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 3px 8px;
+      margin-bottom: 5px;
+      font-size: 11.5pt;
+      font-weight: bold;
+    }
+
+    .lbl { white-space: nowrap; }
+
+    .field {
+      border: none;
+      border-bottom: 1.5px solid #cbd5e1;
+      outline: none;
+      font-family: inherit;
+      font-size: 11.5pt;
+      font-weight: bold;
+      padding: 1px 4px;
+      background: transparent;
+      transition: border-color 0.2s;
+      min-width: 60px;
+    }
+    .field:focus       { border-bottom-color: #3b82f6; }
+    .field::placeholder { color: #94a3b8; font-weight: normal; }
+
+    .f-nom   { flex: 1; min-width: 140px; }
+    .f-poste { flex: 1.5; min-width: 180px; }
+    .f-heures { width: 65px; }
+    .f-jours  { width: 85px; }
+    .f-mois   { width: 120px; }
+
+    /* ── TABLE ── */
+    #task-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5pt;
+      margin-bottom: 4px;
+    }
+
+    #task-table thead th {
+      border: 1px solid #1e293b;
+      padding: 6px 10px;
+      text-align: left;
+      font-weight: bold;
+      background: #f8fafc;
+    }
+
+    #task-table thead th:first-child { width: 105px; }
+    #task-table thead th:last-child  { width: 32px; border: none; background: transparent; }
+
+    .task-row td             { border: 1px solid #94a3b8; padding: 0; vertical-align: top; }
+    .task-row td:last-child  { border: none; width: 32px; vertical-align: middle; text-align: center; padding: 4px; }
+
+    .date-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      padding: 5px 9px;
+      font-family: inherit;
+      font-size: 10.5pt;
+      background: transparent;
+    }
+
+    .desc-cell {
+      min-height: 30px;
+      padding: 5px 9px;
+      outline: none;
+      font-family: inherit;
+      font-size: 10.5pt;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .desc-cell:empty::before {
+      content: attr(data-ph);
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 3px;
+      line-height: 1;
+      font-family: inherit;
+      transition: color 0.15s, background 0.15s;
+    }
+    .del-btn:hover { color: #ef4444; background: #fee2e2; }
+
+    /* ── ADD ROW ── */
+    #add-row-wrap { margin-bottom: 28px; }
+
+    #add-row-btn {
+      width: 100%;
+      padding: 7px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 12px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    #add-row-btn:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    /* ── SIGNATURES ── */
+    .sig-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 24px;
+      font-size: 10.5pt;
+    }
+
+    .sig-block { width: 42%; }
+
+    .sig-title {
+      font-weight: bold;
+      margin-bottom: 38px;
+    }
+
+    .sig-name {
+      border: none;
+      border-bottom: 1px solid #94a3b8;
+      outline: none;
+      font-family: inherit;
+      font-size: 10.5pt;
+      width: 100%;
+      padding: 2px 3px;
+      background: transparent;
+      transition: border-color 0.2s;
+    }
+    .sig-name:focus       { border-bottom-color: #3b82f6; }
+    .sig-name::placeholder { color: #94a3b8; }
+
+    /* ── NOTIFICATION ── */
+    #notif {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      z-index: 2000;
+    }
+    #notif.show { opacity: 1; transform: translateY(0); }
+
+    /* ── PRINT ── */
+    @media print {
+      #toolbar, #add-row-wrap, .del-btn { display: none !important; }
+
+      body { background: #fff; }
+
+      #doc-wrapper { margin: 0; padding: 0; }
+
+      #doc {
+        width: 100%;
+        box-shadow: none;
+        padding: 12mm 15mm;
+        min-height: auto;
+      }
+
+      input {
+        border: none !important;
+        border-bottom: none !important;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .sig-name { border-bottom: none !important; }
+
+      .desc-cell:empty::before { content: ''; }
+
+      .task-row td:last-child              { display: none !important; }
+      #task-table thead th:last-child      { display: none !important; }
+
+      @page { size: A4 portrait; margin: 14mm 18mm; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <span class="title">Feuille de Temps</span>
+  <div class="divider"></div>
+  <button class="btn btn-add"  onclick="addRow()">+ Ajouter une ligne</button>
+  <button class="btn btn-pdf"  onclick="exportPDF()">⬇ PDF</button>
+  <button class="btn btn-docx" onclick="exportDOCX()">⬇ DOCX</button>
+  <div class="divider"></div>
+  <button class="btn btn-new"  onclick="newDoc()">Nouveau</button>
+</div>
+
+<div id="notif"></div>
+
+<!-- DOCUMENT -->
+<div id="doc-wrapper"><div id="doc">
+
+  <!-- En-tête ligne 1 : Nom / Poste -->
+  <div class="header-section">
+    <div class="header-row">
+      <span class="lbl">Nom :</span>
+      <input type="text" id="f-nom"   class="field f-nom"   placeholder="Nom et prénom">
+      <span class="lbl" style="margin-left:14px">Poste :</span>
+      <input type="text" id="f-poste" class="field f-poste" placeholder="Poste occupé">
+    </div>
+    <!-- En-tête ligne 2 : Heures / Jours / Mois -->
+    <div class="header-row">
+      <span class="lbl">Nbre d'heure/jour :</span>
+      <input type="text" id="f-heures" class="field f-heures" placeholder="8H">
+      <span class="lbl" style="margin-left:14px">Nombre de jours de travail :</span>
+      <input type="text" id="f-jours"  class="field f-jours"  placeholder="22 jours">
+      <span class="lbl" style="margin-left:14px">Mois :</span>
+      <input type="text" id="f-mois"   class="field f-mois"   placeholder="Novembre 2025">
+    </div>
+  </div>
+
+  <!-- Tableau des tâches -->
+  <table id="task-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description des tâches</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="task-body"></tbody>
+  </table>
+
+  <!-- Bouton ajout inline -->
+  <div id="add-row-wrap">
+    <button id="add-row-btn" type="button" onclick="addRow()">+ Ajouter une ligne</button>
+  </div>
+
+  <!-- Signatures -->
+  <div class="sig-section">
+    <div class="sig-block">
+      <div class="sig-title">Signature de l'ASS RAF</div>
+      <input type="text" class="sig-name" id="sig-l" placeholder="Nom du signataire">
+    </div>
+    <div class="sig-block" style="text-align:right">
+      <div class="sig-title">Signature la superviseure</div>
+      <input type="text" class="sig-name" id="sig-r" placeholder="Nom du signataire">
+    </div>
+  </div>
+
+</div></div>
+
+<!-- Librairies -->
+<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<script>
+'use strict';
+
+let saveTimer;
+
+// Auto-save sur chaque modification
+document.getElementById('doc').addEventListener('input', () => {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persist, 800);
+});
+
+// ── LIGNES ────────────────────────────────────────────────────
+function addRow(date, desc) {
+  date = date || '';
+  desc = desc || '';
+
+  const tbody = document.getElementById('task-body');
+  const tr    = document.createElement('tr');
+  tr.className = 'task-row';
+
+  // Cellule date
+  const tdDate  = document.createElement('td');
+  const dateIn  = document.createElement('input');
+  dateIn.type        = 'text';
+  dateIn.className   = 'date-input';
+  dateIn.placeholder = 'ex: 03 Novembre';
+  dateIn.value       = date;
+  tdDate.appendChild(dateIn);
+
+  // Cellule description
+  const tdDesc  = document.createElement('td');
+  const descDiv = document.createElement('div');
+  descDiv.contentEditable = 'true';
+  descDiv.className       = 'desc-cell';
+  descDiv.dataset.ph      = 'Description des tâches...';
+  if (desc) descDiv.innerText = desc;
+  tdDesc.appendChild(descDiv);
+
+  // Cellule supprimer
+  const tdDel  = document.createElement('td');
+  const delBtn = document.createElement('button');
+  delBtn.className = 'del-btn';
+  delBtn.innerHTML = '×';
+  delBtn.title     = 'Supprimer';
+  delBtn.type      = 'button';
+  delBtn.onclick   = () => { tr.remove(); persist(); };
+  tdDel.appendChild(delBtn);
+
+  tr.appendChild(tdDate);
+  tr.appendChild(tdDesc);
+  tr.appendChild(tdDel);
+  tbody.appendChild(tr);
+
+  if (!date) dateIn.focus();
+}
+
+// ── DONNÉES ───────────────────────────────────────────────────
+function getData() {
+  const rows = [];
+  document.querySelectorAll('.task-row').forEach(tr => {
+    rows.push({
+      date: tr.querySelector('.date-input').value,
+      desc: tr.querySelector('.desc-cell').innerText.trim(),
+    });
+  });
+  return {
+    nom:    document.getElementById('f-nom').value,
+    poste:  document.getElementById('f-poste').value,
+    heures: document.getElementById('f-heures').value,
+    jours:  document.getElementById('f-jours').value,
+    mois:   document.getElementById('f-mois').value,
+    sigL:   document.getElementById('sig-l').value,
+    sigR:   document.getElementById('sig-r').value,
+    rows,
+  };
+}
+
+function setData(d) {
+  d = d || {};
+  document.getElementById('f-nom').value    = d.nom    || '';
+  document.getElementById('f-poste').value  = d.poste  || '';
+  document.getElementById('f-heures').value = d.heures || '';
+  document.getElementById('f-jours').value  = d.jours  || '';
+  document.getElementById('f-mois').value   = d.mois   || '';
+  document.getElementById('sig-l').value    = d.sigL   || '';
+  document.getElementById('sig-r').value    = d.sigR   || '';
+  document.getElementById('task-body').innerHTML = '';
+  (d.rows || []).forEach(function(r) { addRow(r.date, r.desc); });
+}
+
+// ── PERSISTANCE ───────────────────────────────────────────────
+function persist() {
+  try {
+    localStorage.setItem('fdt', JSON.stringify(getData()));
+    notify('Sauvegardé ✓');
+  } catch(e) {
+    notify('Erreur de sauvegarde');
+  }
+}
+
+// ── NOUVEAU ───────────────────────────────────────────────────
+function newDoc() {
+  if (!confirm('Créer une nouvelle feuille ? Les données seront effacées.')) return;
+  localStorage.removeItem('fdt');
+  setData({});
+  addRow();
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────
+function exportPDF() {
+  window.print();
+}
+
+// ── EXPORT DOCX ───────────────────────────────────────────────
+async function exportDOCX() {
+  if (typeof window.docx === 'undefined') {
+    alert('La librairie DOCX n\'est pas disponible. Vérifiez votre connexion internet.');
+    return;
+  }
+
+  var d = getData();
+  var _docx = window.docx;
+  var Document   = _docx.Document;
+  var Packer     = _docx.Packer;
+  var Paragraph  = _docx.Paragraph;
+  var Table      = _docx.Table;
+  var TableRow   = _docx.TableRow;
+  var TableCell  = _docx.TableCell;
+  var TextRun    = _docx.TextRun;
+  var WidthType  = _docx.WidthType;
+
+  function boldPara(text) {
+    return new Paragraph({
+      children: [new TextRun({ text: text, bold: true, size: 22 })]
+    });
+  }
+
+  // En-têtes
+  var header = [
+    boldPara('Nom : ' + d.nom + '     Poste : ' + d.poste),
+    boldPara(
+      'Nbre d\'heure/jour : ' + d.heures +
+      '     Nombre de jours de travail : ' + d.jours +
+      '     Mois : ' + d.mois
+    ),
+    new Paragraph({ text: '' }),
+  ];
+
+  // Tableau
+  var headerRow = new TableRow({
+    children: [
+      new TableCell({
+        width: { size: 20, type: WidthType.PERCENTAGE },
+        children: [new Paragraph({ children: [new TextRun({ text: 'Date', bold: true, size: 21 })] })]
+      }),
+      new TableCell({
+        width: { size: 80, type: WidthType.PERCENTAGE },
+        children: [new Paragraph({ children: [new TextRun({ text: 'Description des tâches', bold: true, size: 21 })] })]
+      }),
+    ]
+  });
+
+  var dataRows = d.rows.map(function(r) {
+    return new TableRow({
+      children: [
+        new TableCell({
+          width: { size: 20, type: WidthType.PERCENTAGE },
+          children: [new Paragraph({ children: [new TextRun({ text: r.date, size: 21 })] })]
+        }),
+        new TableCell({
+          width: { size: 80, type: WidthType.PERCENTAGE },
+          children: r.desc
+            ? r.desc.split('\n').map(function(line) {
+                return new Paragraph({ children: [new TextRun({ text: line, size: 21 })] });
+              })
+            : [new Paragraph({ text: '' })]
+        }),
+      ]
+    });
+  });
+
+  var taskTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [headerRow].concat(dataRows),
+  });
+
+  // Signatures
+  var sigTitle = new Paragraph({
+    children: [
+      new TextRun({ text: 'Signature de l\'ASS RAF', bold: true, size: 21 }),
+      new TextRun({ text: '\t\t\t\t\t', size: 21 }),
+      new TextRun({ text: 'Signature la superviseure', bold: true, size: 21 }),
+    ]
+  });
+
+  var sigNames = new Paragraph({
+    children: [
+      new TextRun({ text: d.sigL, size: 21 }),
+      new TextRun({ text: '\t\t\t\t\t', size: 21 }),
+      new TextRun({ text: d.sigR, size: 21 }),
+    ]
+  });
+
+  var doc = new Document({
+    sections: [{
+      properties: {
+        page: { margin: { top: 1080, bottom: 1080, left: 1134, right: 1134 } }
+      },
+      children: header.concat([
+        taskTable,
+        new Paragraph({ text: '' }),
+        new Paragraph({ text: '' }),
+        new Paragraph({ text: '' }),
+        sigTitle,
+        new Paragraph({ text: '' }),
+        sigNames,
+      ])
+    }]
+  });
+
+  try {
+    var blob = await Packer.toBlob(doc);
+    saveAs(blob, 'feuille-de-temps-' + (d.mois || 'export') + '.docx');
+    notify('DOCX exporté ✓');
+  } catch(err) {
+    console.error(err);
+    alert('Erreur DOCX : ' + err.message);
+  }
+}
+
+// ── NOTIFICATION ──────────────────────────────────────────────
+var notifTimer;
+function notify(msg) {
+  var el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(function() { el.classList.remove('show'); }, 2000);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  var saved = localStorage.getItem('fdt');
+  if (saved) {
+    try { setData(JSON.parse(saved)); return; } catch(e) {}
+  }
+  addRow();
+});
+</script>
+</body>
+</html>
